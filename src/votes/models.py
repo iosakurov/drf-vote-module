@@ -46,8 +46,6 @@ class Vote(models.Model):
 		super(Vote, self).clean()
 
 	def save(self, *args, **kwargs):
-
-		# Проверка на существующую связь
 		if self.voter.pk == self.candidate.pk:
 			raise exceptions.ValidationError(
 				f'Самому себе лайки нельзя ставить',
@@ -77,9 +75,8 @@ class Profile(models.Model):
 			Vote.objects.create(voter=self, candidate=profile, is_like=is_like)
 			print('Голос успешно создан')
 
-
-def __str__(self):
-	return f'{self.user.username}'
+	def __str__(self):
+		return f'{self.user.username}'
 
 
 @receiver(post_save, sender=User)
