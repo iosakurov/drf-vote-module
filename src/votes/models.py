@@ -46,7 +46,7 @@ class Vote(models.Model):
 		super(Vote, self).clean()
 
 	def save(self, *args, **kwargs):
-		# print('Save', args, kwargs)
+
 		# Проверка на существующую связь
 		if self.voter.pk == self.candidate.pk:
 			raise exceptions.ValidationError(
@@ -77,8 +77,9 @@ class Profile(models.Model):
 			Vote.objects.create(voter=self, candidate=profile, is_like=is_like)
 			print('Голос успешно создан')
 
-	def __str__(self):
-		return f'{self.user.username}'
+
+def __str__(self):
+	return f'{self.user.username}'
 
 
 @receiver(post_save, sender=User)
@@ -89,7 +90,3 @@ def create_profile(sender, instance, **kwargs):
 		print('Create profile for ', instance)
 		profile = Profile.objects.create(user=instance)
 		profile.save()
-
-# admin = Profile.objects.get(user__username='admin')
-# sad = Profile.objects.get(user__username='sad')
-# night = Profile.objects.get(user__username='night')
