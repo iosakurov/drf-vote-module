@@ -7,6 +7,6 @@ router.register(r'votes', views.VoteViewSet)
 router.register(r'profiles', views.ProfileViewSet)
 
 urlpatterns = [
-	path('', include(router.urls))
+    path('', include(router.urls))
 
 ]
