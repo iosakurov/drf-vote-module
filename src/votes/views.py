@@ -1,11 +1,21 @@
 from django.core import exceptions
-from rest_framework import generics, status
+import django_filters
+from rest_framework import generics, status, filters
 from rest_framework import viewsets, permissions
 from rest_framework.response import Response
 from rest_framework.decorators import action
 
 from .models import Vote, Profile
 from .serializers import VoteSerializer, ProfileSerializer
+
+
+class VoteFilter(django_filters.FilterSet):
+    voter = django_filters.CharFilter(field_name='voter__user__username', lookup_expr='iexact')
+    candidate = django_filters.CharFilter(field_name='candidate__user__username', lookup_expr='iexact')
+
+    class Meta:
+        model = Vote
+        fields = ['id', 'candidate', 'voter', 'is_like']
 
 
 class ProfileViewSet(viewsets.ModelViewSet):
@@ -16,9 +26,14 @@ class ProfileViewSet(viewsets.ModelViewSet):
 class VoteViewSet(viewsets.ModelViewSet):
     queryset = Vote.objects.all()
     serializer_class = VoteSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    # permission_classes = [permissions.IsAuthenticated]
 
-    @action(methods=['POST'], detail=False)
+    ordering_fields = ['id']
+    ordering = ['-id']
+    filter_backends = [filters.OrderingFilter, django_filters.rest_framework.DjangoFilterBackend]
+    filter_class = VoteFilter
+
+    @action(methods=['post'], detail=False)
     def add_vote(self, request, *args, **kwargs):
         try:
             voter = Profile.objects.get(user=request.user)
@@ -49,35 +64,20 @@ class VoteViewSet(viewsets.ModelViewSet):
         return Response({'message': 'You have successfully voted', 'vote': serializer.data},
                         status=status.HTTP_200_OK)
 
+    @action(methods=['get'], detail=False)
+    def info(self, request, *args, **kwargs):
+        votes_count = Vote.objects.all().count()
+        votes_for = Vote.objects.filter(is_like=True).count()
+        votes_against = Vote.objects.filter(is_like=False).count()
 
-class VoteList(generics.ListAPIView):
-    queryset = Vote.objects.all()
-    serializer_class = VoteSerializer
+        return Response({
+            'votes': {
+                'count': votes_count,
+                'for': votes_for,
+                'against': votes_against
+            }
+        }, status=status.HTTP_200_OK)
 
-
-class VoteDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Vote.objects.all()
-    serializer_class = VoteSerializer
-
-
-class ProfileList(generics.ListAPIView):
-    queryset = Profile.objects.all()
-    serializer_class = ProfileSerializer
-
-
-class ProfileDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Profile.objects.all()
-    serializer_class = ProfileSerializer
-
-
-class VoteVotersMeView(generics.RetrieveAPIView):
-    pass
-
-
-class VoteAgainstMeView(generics.RetrieveAPIView):
-    pass
-
-
-class VotesInfoView(generics.RetrieveAPIView):
-    queryset = Vote.objects.all()
-    serializer_class = VoteSerializer
+    # Лучше же фильтр просто сделать id=admin, is_like=False
+    def votes_me(self, request, pk, *args, **kwargs):
+        pass
