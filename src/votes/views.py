@@ -1,7 +1,7 @@
 from django.core import exceptions
 import django_filters
-from rest_framework import generics, status, filters
-from rest_framework import viewsets, permissions
+from rest_framework import status, filters, viewsets
+from rest_framework.reverse import reverse
 from rest_framework.response import Response
 from rest_framework.decorators import action
 
@@ -26,12 +26,10 @@ class ProfileViewSet(viewsets.ModelViewSet):
 class VoteViewSet(viewsets.ModelViewSet):
     queryset = Vote.objects.all()
     serializer_class = VoteSerializer
-    # permission_classes = [permissions.IsAuthenticated]
-
-    ordering_fields = ['id']
-    ordering = ['-id']
-    filter_backends = [filters.OrderingFilter, django_filters.rest_framework.DjangoFilterBackend]
     filter_class = VoteFilter
+    filter_backends = [filters.OrderingFilter, django_filters.rest_framework.DjangoFilterBackend]
+    ordering = ['-id']
+    ordering_fields = ['id']
 
     @action(methods=['post'], detail=False, url_path='addVote')
     def add_vote(self, request, *args, **kwargs):
@@ -52,9 +50,11 @@ class VoteViewSet(viewsets.ModelViewSet):
         is_like = request.data['is_like']
 
         try:
-            Vote.objects.get(voter=voter, candidate=candidate)
-            return Response({'message': 'Вы отдали голос этому профилю'},
-                            status=status.HTTP_400_BAD_REQUEST)
+            vote = Vote.objects.get(voter=voter, candidate=candidate)
+
+            return Response({'message': 'Голос обновлен!',
+                             'url': reverse('vote-detail', args=[vote.pk], request=request)},
+                            status=status.HTTP_200_OK)
         except Vote.DoesNotExist:
             try:
                 vote = Vote.objects.create(voter=voter,
@@ -65,7 +65,7 @@ class VoteViewSet(viewsets.ModelViewSet):
 
         serializer = VoteSerializer(vote)
 
-        return Response({'message': 'You have successfully voted', 'vote': serializer.data},
+        return Response({'message': 'Вы успешно проголосовали', 'result': serializer.data},
                         status=status.HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='getInfoVotes')
