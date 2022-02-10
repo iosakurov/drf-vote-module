@@ -33,8 +33,12 @@ class VoteViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.OrderingFilter, django_filters.rest_framework.DjangoFilterBackend]
     filter_class = VoteFilter
 
-    @action(methods=['post'], detail=False)
+    @action(methods=['post'], detail=False, url_path='addVote')
     def add_vote(self, request, *args, **kwargs):
+        # TODO:
+        # Выяснить, если смысл в этом методе, а то похоже на
+        # Vote.objects.create(), но с доп проверкой и в отдельном методе
+
         try:
             voter = Profile.objects.get(user=request.user)
         except Profile.DoesNotExist:
@@ -64,7 +68,7 @@ class VoteViewSet(viewsets.ModelViewSet):
         return Response({'message': 'You have successfully voted', 'vote': serializer.data},
                         status=status.HTTP_200_OK)
 
-    @action(methods=['get'], detail=False)
+    @action(methods=['get'], detail=False, url_path='getInfoVotes')
     def info(self, request, *args, **kwargs):
         votes_count = Vote.objects.all().count()
         votes_for = Vote.objects.filter(is_like=True).count()
@@ -77,7 +81,3 @@ class VoteViewSet(viewsets.ModelViewSet):
                 'against': votes_against
             }
         }, status=status.HTTP_200_OK)
-
-    # Лучше же фильтр просто сделать id=admin, is_like=False
-    def votes_me(self, request, pk, *args, **kwargs):
-        pass
