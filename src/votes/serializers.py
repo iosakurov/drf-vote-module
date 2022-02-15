@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from .models import Profile, Vote
-import time
 
 
 class ProfileSerializer(serializers.ModelSerializer):

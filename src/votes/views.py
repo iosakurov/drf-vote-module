@@ -1,21 +1,13 @@
 from django.core import exceptions
-import django_filters
 from rest_framework import status, filters, viewsets
 from rest_framework.reverse import reverse
 from rest_framework.response import Response
 from rest_framework.decorators import action
+import django_filters
 
 from .models import Vote, Profile
 from .serializers import VoteSerializer, ProfileSerializer
-
-
-class VoteFilter(django_filters.FilterSet):
-    voter = django_filters.CharFilter(field_name='voter__user__username', lookup_expr='iexact')
-    candidate = django_filters.CharFilter(field_name='candidate__user__username', lookup_expr='iexact')
-
-    class Meta:
-        model = Vote
-        fields = ['id', 'candidate', 'voter', 'is_like']
+from .filters import VoteFilter
 
 
 class ProfileViewSet(viewsets.ModelViewSet):
